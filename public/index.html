@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="theme-color" content="#0f0f12">
+  <link rel="manifest" href="/manifest.json">
   <title>Sažetak vijesti</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -99,6 +100,49 @@
 
     input[type="url"]:focus {
       border-color: var(--accent);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .input-row input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .btn-paste {
+      flex-shrink: 0;
+      width: 48px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-paste:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    .btn-paste:active {
+      transform: scale(0.96);
+    }
+
+    .btn-paste:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .btn {
@@ -218,14 +262,19 @@
 
     <div class="card">
       <label for="url">URL članka</label>
-      <input
-        type="url"
-        id="url"
-        name="url"
-        placeholder="npr. https://www.index.hr/..."
-        autocomplete="url"
-        inputmode="url"
-      />
+      <div class="input-row">
+        <input
+          type="url"
+          id="url"
+          name="url"
+          placeholder="npr. https://www.index.hr/..."
+          autocomplete="url"
+          inputmode="url"
+        />
+        <button type="button" class="btn-paste" id="btnPaste" title="Zalijepi link iz međuspremnika" aria-label="Zalijepi link iz međuspremnika">
+          <span aria-hidden="true">📋</span>
+        </button>
+      </div>
       <button type="button" class="btn" id="btn">Sažmi</button>
     </div>
 
@@ -240,10 +289,61 @@
   <script>
     const urlInput = document.getElementById('url');
     const btn = document.getElementById('btn');
+    const btnPaste = document.getElementById('btnPaste');
     const resultCard = document.getElementById('result');
     const summaryList = document.getElementById('summaryList');
     const errorMsg = document.getElementById('errorMsg');
     const noApiHint = document.getElementById('noApiHint');
+
+    function isUrlLike(str) {
+      if (!str || typeof str !== 'string') return false;
+      const s = str.trim();
+      return /^https?:\/\//i.test(s) || /^[a-z0-9-]+\.(hr|com|org|net)[^\s]*/i.test(s);
+    }
+
+    function extractUrlFromShareParams(params) {
+      const url = params.get('url');
+      if (url && url.trim()) return url.trim();
+      const text = params.get('text');
+      if (text) {
+        const t = text.trim();
+        if (isUrlLike(t)) return t;
+        var m = t.match(/https?:\/\/[^\s]+/);
+        if (m) return m[0];
+      }
+      return '';
+    }
+
+    async function doSummarize() {
+      const url = urlInput.value.trim();
+      if (!url) {
+        urlInput.focus();
+        return;
+      }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loader"></span> Sažimanje...';
+      resultCard.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || 'Došlo je do greške.');
+          return;
+        }
+        showResult(data.summary || [], data.error === 'NO_API_KEY');
+      } catch (err) {
+        showError('Nije moguće kontaktirati server. Provjeri mrežu ili pokušaj ponovno.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sažmi';
+      }
+    }
 
     function showResult(summary, isNoApiKey) {
       resultCard.classList.remove('hidden');
@@ -274,42 +374,45 @@
       noApiHint.classList.add('hidden');
     }
 
-    btn.addEventListener('click', async function () {
-      const url = urlInput.value.trim();
-      if (!url) {
-        urlInput.focus();
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerHTML = '<span class="loader"></span> Sažimanje...';
-      resultCard.classList.add('hidden');
-
-      try {
-        const res = await fetch('/api/summarize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: url }),
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          showError(data.error || 'Došlo je do greške.');
-          return;
-        }
-
-        showResult(data.summary || [], data.error === 'NO_API_KEY');
-      } catch (err) {
-        showError('Nije moguće kontaktirati server. Provjeri mrežu ili pokušaj ponovno.');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Sažmi';
-      }
-    });
+    btn.addEventListener('click', doSummarize);
 
     urlInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') btn.click();
     });
+
+    btnPaste.addEventListener('click', async function () {
+      try {
+        if (!navigator.clipboard || !navigator.clipboard.readText) {
+          showError('Lijepljenje iz međuspremnika nije podržano u ovom pregledniku.');
+          return;
+        }
+        var text = await navigator.clipboard.readText();
+        if (!text) {
+          urlInput.focus();
+          return;
+        }
+        text = text.trim();
+        if (isUrlLike(text)) {
+          urlInput.value = text;
+        } else {
+          var match = text.match(/https?:\/\/[^\s]+/);
+          urlInput.value = match ? match[0] : text;
+        }
+        urlInput.focus();
+      } catch (err) {
+        showError('Nije moguće čitati međuspremnik. Na iOS-u prvo dozvoli pristup u postavkama.');
+      }
+    });
+
+    (function initShareTarget() {
+      var params = new URLSearchParams(window.location.search);
+      var sharedUrl = extractUrlFromShareParams(params);
+      if (sharedUrl) {
+        urlInput.value = sharedUrl;
+        window.history.replaceState({}, document.title, window.location.pathname || '/');
+        doSummarize();
+      }
+    })();
   </script>
 </body>
 </html>

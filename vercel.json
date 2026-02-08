@@ -2,6 +2,8 @@
   "version": 2,
   "rewrites": [
     { "source": "/", "destination": "/public/index.html" },
-    { "source": "/index.html", "destination": "/public/index.html" }
+    { "source": "/index.html", "destination": "/public/index.html" },
+    { "source": "/manifest.json", "destination": "/public/manifest.json" },
+    { "source": "/icons/:path*", "destination": "/public/icons/:path*" }
   ]
 }
