@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0f0f12">
+  <title>Sažetak vijesti</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f12;
+      --surface: #18181c;
+      --border: #2a2a30;
+      --text: #e8e8ec;
+      --text-muted: #9a9aa3;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --success: #22c55e;
+      --error: #ef4444;
+      --radius: 14px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: clamp(16px, 5vw, 24px);
+      padding-top: max(env(safe-area-inset-top), 16px);
+      padding-bottom: max(env(safe-area-inset-bottom), 24px);
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    input[type="url"] {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="url"]::placeholder {
+      color: var(--text-muted);
+    }
+
+    input[type="url"]:focus {
+      border-color: var(--accent);
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loader {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #result {
+      min-height: 0;
+      transition: opacity 0.2s;
+    }
+
+    #result.hidden {
+      display: none;
+    }
+
+    .result-title {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 12px;
+    }
+
+    .summary-list {
+      list-style: none;
+    }
+
+    .summary-list li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 10px;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    .summary-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.5em;
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .error-msg {
+      font-size: 0.9375rem;
+      color: var(--error);
+      padding: 12px;
+      background: rgba(239, 68, 68, 0.1);
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+
+    .no-api-hint {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(99, 102, 241, 0.08);
+      border-radius: 8px;
+      border: 1px dashed var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Sažetak vijesti</h1>
+      <p class="subtitle">Zalijepi URL članka i dobit ćeš sažetak u natuknicama</p>
+    </header>
+
+    <div class="card">
+      <label for="url">URL članka</label>
+      <input
+        type="url"
+        id="url"
+        name="url"
+        placeholder="npr. https://www.index.hr/..."
+        autocomplete="url"
+        inputmode="url"
+      />
+      <button type="button" class="btn" id="btn">Sažmi</button>
+    </div>
+
+    <div class="card hidden" id="result" aria-live="polite">
+      <p class="result-title">Sažetak</p>
+      <ul class="summary-list" id="summaryList"></ul>
+      <div class="error-msg hidden" id="errorMsg"></div>
+      <div class="no-api-hint hidden" id="noApiHint"></div>
+    </div>
+  </div>
+
+  <script>
+    const urlInput = document.getElementById('url');
+    const btn = document.getElementById('btn');
+    const resultCard = document.getElementById('result');
+    const summaryList = document.getElementById('summaryList');
+    const errorMsg = document.getElementById('errorMsg');
+    const noApiHint = document.getElementById('noApiHint');
+
+    function showResult(summary, isNoApiKey) {
+      resultCard.classList.remove('hidden');
+      summaryList.innerHTML = '';
+      errorMsg.classList.add('hidden');
+      errorMsg.textContent = '';
+      noApiHint.classList.add('hidden');
+      noApiHint.textContent = '';
+
+      if (Array.isArray(summary) && summary.length) {
+        summary.forEach(function (point) {
+          const li = document.createElement('li');
+          li.textContent = point;
+          summaryList.appendChild(li);
+        });
+        if (isNoApiKey) {
+          noApiHint.textContent = 'U .env postavi OPENAI_API_KEY svojim ključem i ponovno pokreni server.';
+          noApiHint.classList.remove('hidden');
+        }
+      }
+    }
+
+    function showError(message) {
+      resultCard.classList.remove('hidden');
+      summaryList.innerHTML = '';
+      errorMsg.textContent = message;
+      errorMsg.classList.remove('hidden');
+      noApiHint.classList.add('hidden');
+    }
+
+    btn.addEventListener('click', async function () {
+      const url = urlInput.value.trim();
+      if (!url) {
+        urlInput.focus();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loader"></span> Sažimanje...';
+      resultCard.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || 'Došlo je do greške.');
+          return;
+        }
+
+        showResult(data.summary || [], data.error === 'NO_API_KEY');
+      } catch (err) {
+        showError('Nije moguće kontaktirati server. Je li aplikacija pokrenuta?');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sažmi';
+      }
+    });
+
+    urlInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') btn.click();
+    });
+  </script>
+</body>
+</html>
