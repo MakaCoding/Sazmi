@@ -260,7 +260,7 @@
           summaryList.appendChild(li);
         });
         if (isNoApiKey) {
-          noApiHint.textContent = 'U .env postavi OPENAI_API_KEY svojim ključem i ponovno pokreni server.';
+          noApiHint.textContent = 'Postavi OPENAI_API_KEY (u .env lokalno ili u Vercel Environment Variables).';
           noApiHint.classList.remove('hidden');
         }
       }
@@ -300,7 +300,7 @@
 
         showResult(data.summary || [], data.error === 'NO_API_KEY');
       } catch (err) {
-        showError('Nije moguće kontaktirati server. Je li aplikacija pokrenuta?');
+        showError('Nije moguće kontaktirati server. Provjeri mrežu ili pokušaj ponovno.');
       } finally {
         btn.disabled = false;
         btn.textContent = 'Sažmi';

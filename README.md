@@ -39,16 +39,29 @@ Jednostavna web aplikacija za brzo sažimanje vijesti s portala (Index, Slobodna
 2. Klikni **Sažmi**.
 3. Sažetak se prikaže ispod u obliku natuknica na hrvatskom.
 
+## Deployment na Vercel
+
+Aplikacija koristi **relativne putanje** (`/api/summarize`), pa radi i na Vercelu bez promjene koda.
+
+1. Repozitorij poveži s Vercelom (Import Project).
+2. **Environment Variables** u Vercel projektu: dodaj `OPENAI_API_KEY` s vrijednošću svog OpenAI ključa.
+3. Deploy – Vercel automatski prepoznaje `api/` folder kao serverless funkcije i `vercel.json` za rewrite glavne stranice.
+
+Lokalno i dalje pokrećeš `npm start` (Express); na Vercelu se koriste samo rute iz `api/`.
+
 ## Struktura projekta
 
 ```
 PrvaProbnaAplikacija/
-├── server.js          # Express server i API za sažimanje
-├── package.json       # Ovisnosti i skripte
-├── .env.example       # Primjer .env (kopiraj u .env)
-├── .env               # Tvoj API ključ (ne dijeliti!)
+├── api/
+│   └── summarize.js   # Vercel serverless: POST /api/summarize
+├── lib/
+│   └── summarize.js   # Zajednička logika (dohvat članka + OpenAI)
+├── server.js         # Express za lokalno pokretanje
+├── vercel.json       # Rewrite / → public/index.html
+├── package.json
 ├── public/
-│   └── index.html     # Jednostrani sučelje (mobile-first, tamna tema)
+│   └── index.html    # Sučelje (poziva relativno /api/summarize)
 └── README.md
 ```
 
