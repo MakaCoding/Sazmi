@@ -382,25 +382,14 @@
 
     btnPaste.addEventListener('click', async function () {
       try {
-        if (!navigator.clipboard || !navigator.clipboard.readText) {
-          showError('Lijepljenje iz međuspremnika nije podržano u ovom pregledniku.');
-          return;
-        }
         var text = await navigator.clipboard.readText();
-        if (!text) {
-          urlInput.focus();
-          return;
-        }
-        text = text.trim();
-        if (isUrlLike(text)) {
-          urlInput.value = text;
-        } else {
-          var match = text.match(/https?:\/\/[^\s]+/);
-          urlInput.value = match ? match[0] : text;
+        if (text) {
+          text = text.trim();
+          urlInput.value = isUrlLike(text) ? text : (text.match(/https?:\/\/[^\s]+/) || [text])[0];
         }
         urlInput.focus();
       } catch (err) {
-        showError('Nije moguće čitati međuspremnik. Na iOS-u prvo dozvoli pristup u postavkama.');
+        showError('Kliknite Dopusti kada vas sustav zatraži.');
       }
     });
 
